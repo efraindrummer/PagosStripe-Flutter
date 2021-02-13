@@ -32,6 +32,8 @@ dependencies:
   flutter_bloc: ^6.1.2
   bloc: ^6.1.1
   font_awesome_flutter: ^8.11.0
+  dio: ^3.0.10
+  stripe_payment: ^1.0.10
 
 dev_dependencies:
   flutter_test:

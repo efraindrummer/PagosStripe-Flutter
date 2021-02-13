@@ -126,7 +126,17 @@ class _BtnPay extends StatelessWidget {
           Text(' Pagar', style: TextStyle(color: Colors.white, fontSize: 22)),
         ],
       ),
-      onPressed: (){},
+      onPressed: () async {
+
+        final stripeService = new StripeService();
+        final state = BlocProvider.of<PagarBloc>(context).state;
+
+        final resp = await stripeService.pagarApplePayGooglePay(
+          amount: state.montoPagarString, 
+          currency: state.moneda
+        );
+
+      },
     );
   }
 }

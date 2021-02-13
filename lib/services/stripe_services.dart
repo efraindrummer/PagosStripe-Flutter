@@ -13,16 +13,16 @@ class StripeService {
   static final StripeService _instance = StripeService._privateConstructor();
   factory StripeService() => _instance;
 
-  String _paymentApiUrl = 'https://api.stripe.com/v1/payment_intents';
-  static String _secretKey     = 'sk_test_51IKD4sJ0GPbdxhhR6TegWFho799JXnETXTecXDAXE71ZF8F67O4RgCYGyb53yLrpyOPUNZgDI5nXaW4kJK8UtcWg00PGGrlEHw';
-  String _apiKey        = 'pk_test_51IKD4sJ0GPbdxhhRUZa4hqjKKttpH9TblaXINS3si0IUICFZYG9oQjdp3DejLjkFaXPX5YdIXoMo5MOwpY7CabXz000X9i7L7g';
+  String _paymentApiUrl    = 'https://api.stripe.com/v1/payment_intents';
+  static String _secretKey = 'sk_test_51IKD4sJ0GPbdxhhR6TegWFho799JXnETXTecXDAXE71ZF8F67O4RgCYGyb53yLrpyOPUNZgDI5nXaW4kJK8UtcWg00PGGrlEHw';
+  String _apiKey           = 'pk_test_51IKD4sJ0GPbdxhhRUZa4hqjKKttpH9TblaXINS3si0IUICFZYG9oQjdp3DejLjkFaXPX5YdIXoMo5MOwpY7CabXz000X9i7L7g';
 
   final headerOptions = new Options(
     contentType: Headers.formUrlEncodedContentType,
     headers: {
       'Authorization': 'Bearer ${StripeService._secretKey}'
     }
-  )
+  );
 
 
   void init(){
@@ -54,10 +54,13 @@ class StripeService {
         CardFormPaymentRequest()
       );
 
-      //Crear los intentos
-      final resp = await this._crearPaymentIntent(amount: amount, currency: currency);
+      final resp = await this._realizarPago(
+        amount: amount,
+        currency: currency,
+        paymentMethod: paymentMethod
+      );
 
-      return StripeCustomResponse( ok: true );
+      return resp;
       
     } catch (e) {
       return StripeCustomResponse(
@@ -104,12 +107,40 @@ class StripeService {
     }
   }
 
-  Future _realizarPago({
+  Future<StripeCustomResponse> _realizarPago({
     @required String amount,
     @required String currency,
     @required PaymentMethod paymentMethod,
   }) async {
-    
+
+    try {
+      
+      final paymentIntent = await this._crearPaymentIntent(
+        amount: amount, 
+        currency: currency
+      );
+
+      final paymentResult = await StripePayment.confirmPaymentIntent(
+        PaymentIntent(
+          clientSecret: paymentIntent.clientSecret,
+          paymentMethodId: paymentMethod.id
+        )
+      );
+
+      if(paymentResult.status == 'succeeded'){
+        return StripeCustomResponse(ok: true);
+      }else{
+        return StripeCustomResponse(ok: false, msg: 'Fallo ${paymentResult.status}');
+      }
+      
+    } catch (e) {
+      
+      print(e.toString());
+      return StripeCustomResponse(
+        ok: false,
+        msg: e.toString()
+      );
+    }
   }
   
 }
